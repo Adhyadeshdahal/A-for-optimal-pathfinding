@@ -16,6 +16,8 @@ Node::Node(int h,int g,int x,int y,bool expl){
     this->g=g;
     this->explored=expl;
     this->f = h+g;
+
+    this->connection=nullptr;
     position=make_pair(x,y);
 };
 

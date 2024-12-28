@@ -48,57 +48,58 @@ int main(int argc,char*argv[]){
 
     priority_queue<Node*,vector<Node*>,compareF> minHeap;
 
-    vector<int>hvals = {1,2,3,4,5,6,7,8,9};
-    vector<int>gvals = {0,0,0,0,0,0,0,0,0};
+    vector<int>gvals = {0,9999,9999,9999,9999,9999,9999,9999,99999};
+    vector<int>hvals = {9,8,7,6,5,4,3,2,1};
     Grid grid(hvals,gvals,9);
+                 grid.print();
+                 grid.assignNeighbours();
+                 cin;
     Node& startNode = grid.nodes[start_index];
     Node& endNode = grid.nodes[end_index];
 
-    minHeap.push(&startNode);
-    inQueue[&startNode]=true;
-    Node*parent=nullptr;
+    minHeap.push(&grid.nodes[start_index]);
+    inQueue[&grid.nodes[start_index]]=true;
+            bool istrue=minHeap.empty();
 
-    while (!minHeap.empty())//can put true
-    {
-        auto currentNode= minHeap.top();
-        currentNode->connection=parent;
-        processed[currentNode]=true;
-        minHeap.pop();
+    while (true) {
+    Node* currentNode = minHeap.top();
+    minHeap.pop();
 
-        if (*currentNode==endNode)
-        {
-            //backtracking with the help of connection string until null node doesnt appear
-            printPath(currentNode);
-            return 0;
-        };
-
-        for (auto neighbour:currentNode->neighbours)
-        {
-            if (!neighbour->explored || processed.find(neighbour) != processed.end())
-            {
-                continue;
-            };
-
-            int newGValFromcurrent = calcNewGval(currentNode,neighbour);
-            
-            if ((newGValFromcurrent<neighbour->g) || inQueue.find(neighbour) == inQueue.end())
-            {
-                neighbour->g=newGValFromcurrent;
-                neighbour->setF();
-                neighbour->connection=currentNode;
-
-                if (inQueue.find(neighbour) == inQueue.end())
-                {
-                    inQueue[neighbour]=true;
-                    minHeap.push(neighbour);
-                }else{
-                    minHeap.push(neighbour);
-                }
-                
-            }
-
-        }
-        inQueue[currentNode]=false;
+    if (!currentNode->explored||processed.find(currentNode) != processed.end()) {
+        continue; // Skip if already processed
     }
+
+    processed[currentNode] = true;
+
+    cout << "Processing Node: (" << currentNode->position.first << ", " << currentNode->position.second << ")" << endl;
+
+    if (*currentNode == endNode) {
+        printPath(currentNode);
+        return 0;
+    }
+
+    for (auto neighbour : currentNode->neighbours) {
+        if (processed.find(neighbour) != processed.end()) {
+            continue;
+        }
+
+        int newGValFromCurrent = calcNewGval(currentNode, neighbour);
+
+        if (newGValFromCurrent < neighbour->g || inQueue.find(neighbour) == inQueue.end()) {
+            neighbour->g = newGValFromCurrent;
+            neighbour->setF();
+            neighbour->connection = currentNode;
+            
+
+            if (inQueue.find(neighbour) == inQueue.end()) {
+                inQueue[neighbour] = true;
+            }
+            minHeap.push(neighbour); // Always push to re-prioritize
+        }
+    }
+}
+
+return 0;
+
     
 };
