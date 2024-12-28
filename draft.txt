@@ -1,0 +1,94 @@
+#include "node.h"
+#include <iostream>
+#include <string>
+#include <queue>
+#include <unordered_set>
+#include <unordered_map>
+#include <cstdlib>
+#include "grid.h"
+
+using namespace std;
+
+int calcNewGval(Node* source, Node* desired) {
+    // Calculate new G value (consider diagonal movements as well)
+    if ((desired->position.first - source->position.first != 0) && (desired->position.second - source->position.second != 0)) {
+        return source->g + 14;  // Diagonal movement cost
+    } else {
+        return source->g + 10;  // Straight movement cost
+    }
+}
+
+struct compareF {
+    bool operator()(const Node* a, const Node* b) {
+        // Min-heap based on 'f' value, with tie-breaking on 'h' value
+        return (a->f > b->f) || (a->f == b->f && a->h > b->h);
+    }
+};
+
+int main(int argc, char* argv[]) {
+    int start_index, end_index;
+
+    if (argc > 1) {
+        start_index = stoi(argv[1]);
+        end_index = stoi(argv[2]);
+    } else {
+        start_index = 0;
+        end_index = 8;
+    }
+
+    unordered_map<Node*, bool> processed;
+    priority_queue<Node*, vector<Node*>, compareF> minHeap;
+    unordered_set<Node*> inQueue;  // Track nodes that are in the priority queue
+
+    vector<int> hvals = { 1,2,3,4,5,6,7,8,9 };
+    vector<int> gvals = { 0,0,0,0,0,0,0,0,0 };
+    Grid grid(hvals, gvals, 9);
+
+    Node& startNode = grid.nodes[start_index];
+    Node& endNode = grid.nodes[end_index];
+
+    minHeap.push(&startNode);
+    inQueue.insert(&startNode);  // Mark startNode as in the priority queue
+
+    Node* parent = nullptr;
+
+    while (!minHeap.empty()) {
+        auto currentNode = minHeap.top();
+        currentNode->connection = parent;
+        processed[currentNode] = true;
+        minHeap.pop();
+        inQueue.erase(currentNode);  // Remove from the queue
+
+        if (*currentNode == endNode) {
+            // Backtrack to find the path
+            return 0;
+        }
+
+        for (auto neighbour : currentNode->neighbours) {
+            if (!neighbour->explored || processed.find(neighbour) != processed.end()) {
+                continue;
+            }
+
+            int newGValFromcurrent = calcNewGval(currentNode, neighbour);
+
+            if (newGValFromcurrent < neighbour->g || processed.find(neighbour) == processed.end()) {
+                neighbour->g = newGValFromcurrent;
+                neighbour->setF();
+                neighbour->connection = currentNode;
+
+                // If the neighbour is already in the queue, update it by popping and pushing
+                if (inQueue.find(neighbour) != inQueue.end()) {
+                    // Pop the node and push it back to refresh the heap
+                    minHeap.push(neighbour);
+                    // After pushing, we should mark it as in the queue again
+                } else {
+                    // If the neighbour is not in the queue, add it to the queue
+                    minHeap.push(neighbour);
+                    inQueue.insert(neighbour);
+                }
+            }
+        }
+    }
+
+    return 0;
+}
